@@ -7,76 +7,55 @@ Original file is located at
     https://colab.research.google.com/drive/1T8nQeEgyBt_tIpHIkZ0DkAL1T44B3msz
 """
 
-!pip install --upgrade pandas
 import pandas as pd;pd.__version__
+from google.colab import auth
+auth.authenticate_user()
 
-pip install bike-wheel-calc
+import gspread
+from google.auth import default
+from datetime import datetime, timedelta
 
+creds, _ = default()
+gc = gspread.authorize(creds)
 
-https://pubmed.ncbi.nlm.nih.gov/31197570/
-#glutamine in foods. not free but some data in extract
+spreadsheet = gc.create('Workout_Scheduler_Template')
+print(f"Created: {spreadsheet.url}")
 
+# UserData sheet (first sheet)
+user_sheet = spreadsheet.sheet1
+user_sheet.update_title('UserData')
+user_sheet.update(values=[['user_id', '1']], range_name='A1:B1')
+user_sheet.format('A1:B1', {'textFormat': {'bold': True}})
 
+# Schedule sheet
+schedule_sheet = spreadsheet.add_worksheet('Schedule', rows=50, cols=5)
+schedule_sheet.update(values=[['Date', 'Workout_Sheet_Name', 'Completed', 'Actual_Duration', 'Notes']], range_name='A1:E1')
 
-allfootnotes=pd.read_pickle('./nut_data_datasrc_footnotes')
-mps_file_path = "G:/My Drive/US/oxalate/mgca1to1/b6/glutamic/homeless/shelterfood/bipolar ratios/arginine/methionine/water/mealcycling/sols/cplex.mps"  # Updated file path
-mps_file_path = vd+"cplex.mps"#"G:\\My Drive\\US\\oxalate\\mgca1to1\\b6\\glutamic\\homeless\\shelterfood\\bipolar ratios\\arginine\\methionine\\water\\mealcycling\\sols\\cplex.mps"
+today = datetime.now()
+rows = [[(today + timedelta(days=i)).strftime('%Y-%m-%d'), f'Workout_Day_{i+1}', 'No', '', ''] for i in range(7)]
+schedule_sheet.update(values=rows, range_name='A2:E8')
 
-# Read the contents of the "cplex.mps" file
+# Workout 1
+w1 = spreadsheet.add_worksheet('Workout_Day_1', rows=15, cols=5)
+w1.update(values=[['Interval_Order', 'Duration_Sec', 'Pace', 'Cadence', 'Type']], range_name='A1:E1')
+w1.update(values=[[1,600,'6:00/km',85,'warmup'],[2,240,'5:00/km',90,'work'],[3,120,'6:30/km',80,'recovery'],[4,240,'5:00/km',90,'work'],[5,120,'6:30/km',80,'recovery'],[6,240,'5:00/km',90,'work'],[7,600,'6:00/km',85,'cooldown']], range_name='A2:E8')
+w1.update(values=[['Location: track'],['Music: tempo_mix.mp3'],['Notes: Tempo intervals']], range_name='A10:A12')
 
-with open(mps_file_path, "r", encoding="ISO-8859-1") as mps_file:
-  mps_content = mps_file.read()
+# Workout 2
+w2 = spreadsheet.add_worksheet('Workout_Day_2', rows=15, cols=5)
+w2.update(values=[['Interval_Order', 'Duration_Sec', 'Pace', 'Cadence', 'Type']], range_name='A1:E1')
+w2.update(values=[[1,300,'6:00/km',85,'warmup'],[2,1800,'6:00/km',85,'steady'],[3,300,'6:30/km',80,'cooldown']], range_name='A2:E4')
+w2.update(values=[['Location: park'],['Music: easy_mix.mp3'],['Notes: Easy run']], range_name='A6:A8')
 
+# Workout 3
+w3 = spreadsheet.add_worksheet('Workout_Day_3', rows=15, cols=5)
+w3.update(values=[['Interval_Order', 'Duration_Sec', 'Pace', 'Cadence', 'Type']], range_name='A1:E1')
+w3.update(values=[[1,600,'6:00/km',85,'warmup'],[2,120,'5:30/km',88,'hill'],[3,120,'7:00/km',75,'recovery'],[4,120,'5:30/km',88,'hill'],[5,120,'7:00/km',75,'recovery'],[6,120,'5:30/km',88,'hill'],[7,600,'6:00/km',85,'cooldown']], range_name='A2:E8')
+w3.update(values=[['Location: hills'],['Music: hill_mix.mp3'],['Notes: Hill repeats']], range_name='A10:A12')
 
-print(mps_content)
-
-import pandas as pd
-print(pd.__version__)
-import numpy as np
-print(np.__version__)
-
-allfootnotes.to_excel('allfootnotes.xlsx',freeze_panes=(1, 1))
-
-!pip install --upgrade xlrd
-#!pip install cvxpy
-
-help(pyscipopt.scip)
-
-pip install highspy
-
-import highspy
-import numpy as np
-
-h = highspy.Highs()
-
-import pyomo
-pyomo.__version__
-
-pip install pyomo
-
-"""# scipopt"""
-
-pip install  gspread-formatting
-
-!pip install -q condacolab
-#2024-01-26 works
-import condacolab
-condacolab.install()
-
-!conda install pyscipopt
-
-
-
-
-
-
-
-pip install pyomo
-
-!pyomo help --solvers
-
-# Commented out IPython magic to ensure Python compatibility.
-# %pdb on
+print("✅ Done!")
+print(f"📋 URL: {spreadsheet.url}")
+print("\nUserData sheet created with user_id=1 (edit B1 to change)")
 
 """# usor2"""
 
@@ -149,6 +128,113 @@ npt=pd.read_csv(vd+'npt.csv',index_col=None,dtype={'NDB_No':str});npt.set_index(
 
 #not doing this because all the nutrients are going into chosenfoods1
 #npt.to_csv(vd+'npt.csv')#comes from dataframe_hacking.ipynb
+
+import pandas as pd
+import numpy as np
+from openpyxl import load_workbook
+from datetime import date
+
+# --- Assumes these are already loaded ---
+# npt = pd.read_pickle("npt.pkl")
+# chosenfoods1 = pd.read_excel("chosenfoods1.xlsx", index_col=0)
+
+# --- Step 1: Set up food IDs ---
+green_cabbage_id = '11109'
+green_sauerkraut_id = '11439'
+red_cabbage_id = '11112'
+red_kraut_id = 'redkraut'
+
+# --- Step 2: Create base from red cabbage ---
+rk = npt.loc[red_cabbage_id].astype(float).copy()  # Full baseline nutrient row
+
+
+# --- Step 3: Apply fermentation transformation to selected nutrients ---
+transform_nutrients = ['203', '204', '208', '269', '212', '291', '401']
+
+gc = npt.loc[green_cabbage_id].astype(float)
+gs = npt.loc[green_sauerkraut_id].astype(float)
+
+gc_safe = gc.replace(0, np.nan)
+ratios = gs[transform_nutrients] / gc_safe[transform_nutrients]
+
+# Apply transformation where possible
+for nutr in transform_nutrients:
+    if pd.notna(ratios[nutr]) and nutr in rk:
+        rk[nutr] = round(rk[nutr] * ratios[nutr], 3)
+
+# --- Step 4: Override sodium based on salt % ---
+salt_pct = 1.0  # 1% salt
+natural_na = rk.get('307', 0.0)
+added_na = salt_pct * 393  # mg per 100g for 1% salt
+rk['307'] = round(natural_na + added_na, 2)
+
+rk1= pd.DataFrame(rk).T.assign(
+    Long_Desc='Red cabbage sauerkraut (1% salt, inferred)',
+    price=0.45,
+    date_modified=date.today().isoformat()
+).rename({0: red_kraut_id})
+
+chosenfoods1 = pd.concat([chosenfoods1,rk1])
+
+# --- Step 6: Export to Excel with frozen header/ID ---
+output_path = "chosenfoods1.xlsx"
+chosenfoods1.to_excel(output_path, engine='openpyxl')
+
+# Freeze row 1 and column A
+wb = load_workbook(output_path)
+ws = wb.active
+ws.freeze_panes = ws['B2']
+wb.save(output_path)
+
+from datetime import date
+import numpy as np
+import pandas as pd
+
+# Define IDs for your foods
+carrot_id = '11124'        # Raw carrot (example NDB ID)
+green_cabbage_id = '11109' # Green cabbage (raw)
+sauerkraut_id = '11439'    # Sauerkraut (from green cabbage)
+saurkarrot_id = '99998'    # New food ID for inferred fermented carrot
+
+# Copy carrot nutrient profile
+sk = npt.loc[carrot_id].astype(float).copy()
+
+# Build transformation ratios from cabbage → kraut
+gc = npt.loc[green_cabbage_id].astype(float)
+gs = npt.loc[sauerkraut_id].astype(float)
+
+# Use only nutrients both foods have
+transform_nutrients = ['203', '204', '208', '269', '212', '291', '401']  # + add '255' if desired
+existing_nutrients = [nutr for nutr in transform_nutrients if nutr in npt.columns]
+
+# Avoid divide-by-zero
+gc_safe = gc.replace(0, np.nan)
+ratios = gs[existing_nutrients] / gc_safe[existing_nutrients]
+
+# Apply transformation to carrot
+for nutr in existing_nutrients:
+    if pd.notna(ratios[nutr]) and nutr in sk:
+        sk[nutr] = round(sk[nutr] * ratios[nutr], 3)
+
+# Override sodium manually (1% salt = 1000 mg per 100g food)
+sk['307'] = 1000
+
+# Ensure all index and columns are strings
+chosenfoods1.columns = chosenfoods1.columns.astype(str)
+sk.index = sk.index.astype(str)
+
+# Build 1-row DataFrame
+new_row_df = pd.DataFrame(sk).T
+new_row_df.index = [saurkarrot_id]
+new_row_df.columns = new_row_df.columns.astype(str)
+
+# Add metadata
+new_row_df['Long_Desc'] = 'Fermented carrot (1% salt, inferred)'
+new_row_df['price'] = 0.20
+new_row_df['date_modified'] = date.today().isoformat()
+
+# Append to chosenfoods1 with new columns if needed
+chosenfoods1 = pd.concat([chosenfoods1, new_row_df], axis=0, sort=False)
 
 import pandas as pd
 import numpy as np
@@ -271,100 +357,6 @@ r=uspyomo.UScplex1int(mixed=True,binconsl=intvits,mfg=None,mn=26,mfgex=[])#mfgex
 #for scip, use this version that doesnt' do quantization of amounts
 r=uspyomo.UScplex1int(mixed=True,binconsl=None,mfg=None,mn=24,mfgex=mfgex)#mn=16#this should return the cvxpy.problem to cache i
 
-#the upload link
-https://neos-server.org/neos/solvers/milp:Gurobi/MPS.html
-
-pip install build123d
-
-
-
-
-
-"""## No-good cuts
-the sequence in each directory (order of creation dates) is mps, model0.sol, flu (spreadsheet)
-if the newest is mps, do nothing and stop
-is the newest is zip then unzip then make flu, then rebuild contraints then make new mps, then stop
-Three things can happen in a directory. 1)this is old directory, just building constraint from here 2) this is the solver edge, generate the mps file here
-3) this is solved edge, make flu
-4) past the end this is dinosaur , do nothing
-"""
-
-import os
-def makeflu(input_file, output_dir):
-    # Your processing code here
-    print(f"Processing {input_file} in directory {output_dir}")
-
-    cbcsol=pd.read_table(input_file,index_col=0,sep=None,names=['amounts'],dtype={'name':str,'amounts':float},skiprows=0,engine='python',on_bad_lines='skip')#,dtype={'NAME':str,'CVX_xpress_qp':float},
-    current_sol=cbcsol[cbcsol.index.str.startswith('bv')]#('binvars')]
-    ns=current_sol.shape[0]
-    expr = sum((1 - uspyomo.prob.bv[i]) for i in range(ns) if int(current_sol.iloc[i]['amounts']) == 1) + \
-       sum(uspyomo.prob.bv[i] for i in range(ns) if int(current_sol.iloc[i]['amounts']) == 0)
-
-import re
-from pathlib import Path
-import zipfile
-
-
-# Assume 'vd' is already defined as your full absolute path (e.g., from mounting drive)
-base_dir = Path(vd)
-
-# Regular expression to match subdirectories like "sols", "sols1", "sols2", etc.
-pattern = re.compile(r'^sols\d*$')
-
-# Iterate over matching subdirectories
-for sub_dir in sorted(base_dir.iterdir(), key=lambda p: p.name):
-    if sub_dir.is_dir() and pattern.fullmatch(sub_dir.name):
-        model_file = sub_dir / "model0.sol"
-
-        # Look for zip files in the directory
-        for zip_file in sub_dir.glob("*.zip"):
-            # Unzip if model0.sol doesn't exist, or if the zip file is newer
-            if not model_file.exists() or zip_file.stat().st_mtime > model_file.stat().st_mtime:
-                try:
-                    with zipfile.ZipFile(zip_file, 'r') as z:
-                        z.extractall(sub_dir)
-                    print(f"Extracted {zip_file} in {sub_dir}")
-                except zipfile.BadZipFile:
-                    print(f"Failed to extract {zip_file} (bad zip file).")
-
-        # After extraction, process the model0.sol file if it exists
-        if model_file.exists():
-            makeflu(model_file, sub_dir)
-        else:
-            print(f"model0.sol not found in {sub_dir} after extraction")
-
-vd="/content/drive/MyDrive/US/oxalate/mgca1to1/b6/glutamic/homeless/shelterfood/bipolar ratios/arginine/methionine/water/mealcycling/"
-import pandas as pd#2022-11-01 if reading gurobi cplex output:
-
-import glob
-solssubdir="sols1/"
-path = vd+solssubdir# absolute path to search all text files inside a specific folder
-zf = glob.glob(path+'*.zip')
-from zipfile import ZipFile
-with ZipFile(zf[0], 'r') as zObject:# loading the temp.zip and creating a zip object
-    zObject.extractall(path=path)# Extracting all the members of the zipinto a specific location.
-
-
-cbcsol=pd.read_table(vd+"sols1/"+"model0.sol",index_col=0,sep=None,names=['amounts'],dtype={'name':str,'amounts':float},skiprows=0,engine='python',on_bad_lines='skip')#,dtype={'NAME':str,'CVX_xpress_qp':float},
-current_sol=cbcsol[cbcsol.index.str.startswith('bv')]#('binvars')]
-ns=current_sol.shape[0]
-expr = sum((1 - uspyomo.prob.bv[i]) for i in range(ns) if int(current_sol.iloc[i]['amounts']) == 1) + \
-       sum(uspyomo.prob.bv[i] for i in range(ns) if int(current_sol.iloc[i]['amounts']) == 0)
-
-expr = sum(value(prob.bv[i]) * (1 - prob.bv[i]) + (1 - value(prob.bv[i])) * prob.bv[i] for i in prob.bv)
-uspyomo.prob.constraints.add(expr>=1)
-
-"""## end no-good cuts"""
-
-from google.colab import files
-mps_filename = "simple_model.mps"
-uspyomo.prob.write(filename=mps_filename, io_options={"symbolic_solver_labels": True})
-files.download(mps_filename)
-#now send to neos
-
-"""## fineprint"""
-
-!pip install -q pygsheets
 
 from google.colab import auth
 auth.authenticate_user()
@@ -855,6 +847,529 @@ for i in range(10):
 
 # End of loop
 
+fluwriter.close()
+slackswriter.close()
+
+
+
+format_cell_range()
+
+def debugme():
+    # Use sets for order-independent comparison.
+  #import pdb; pdb.set_trace()
+  prev_set = set(previous_values)
+  current_set = set(current_values)
+
+  # Determine newly added and removed items.
+  new_items = sorted(list(current_set - prev_set))
+  removed_items = sorted(list(prev_set - current_set))#RWS fix this ? 2025-4-5
+  print("New items:", new_items)
+  print("Removed items:", removed_items)
+  #import pdb; pdb.set_trace()
+
+import pandas as pd
+import gspread
+import gspread_formatting
+from gspread_formatting import format_cell_range, cellFormat, color
+import gspread.utils
+
+# Assume these are already defined:
+#   - vd (your directory path)
+#   - gc (your authenticated gspread client)
+#   - service (your Google Sheets API service, if needed for batchUpdate)
+#   - uspyomo, fineprint, fl9, etc.
+#
+# Create Excel writers if needed:
+fluwriter = pd.ExcelWriter(vd + "flu.xlsx", engine="openpyxl")
+slackswriter = pd.ExcelWriter(vd + "slacks.xlsx", engine="openpyxl")
+
+# Open the Google Sheets spreadsheet
+sheet = gc.open_by_key('1U1k0B78SS9nlualX9OmjMx8go09wDZpfyXhzHjpq1ks')
+
+# Delete any worksheets whose title is a digit (within a certain range)
+existing_sheets = sheet.worksheets()
+for ws in existing_sheets:
+    if ws.title.isdigit():
+        sheet.del_worksheet(ws)
+
+# Set up (or create) the Summary worksheet.
+summary_headers = ["Iteration", "Objective", "New Items", "Removed Items"]
+try:
+    summary_ws = sheet.worksheet("Summary")
+    summary_ws.clear()
+    # Write header row.
+    summary_ws.update('A1', [summary_headers])
+except gspread.exceptions.WorksheetNotFound:
+    summary_ws = sheet.add_worksheet(title="Summary", rows="100", cols="10")
+    summary_ws.update('A1', [summary_headers])
+
+diet_history = []  # This will store actual 0/1 values, not variable references
+
+# Main loop (change to while True: for indefinite execution if desired)
+for i in range(150):
+
+
+# BEFORE SOLVING: Add constraints to exclude all previous diets
+    if i > 0:
+        for diet_num, previous_diet in enumerate(diet_history):
+            # This is the key: we're using STORED VALUES from previous_diet
+            # combined with VARIABLE REFERENCES from prob.bv
+
+            # Create the no-good cut:
+            # "At least one food must be different from this previous diet"
+
+            # In C terms, this would be like:
+            # int hamming_distance = 0;
+            # for(j in all_foods) {
+            #     if(previous_diet[j] == 1 && current_bv[j] == 0) hamming_distance++;
+            #     if(previous_diet[j] == 0 && current_bv[j] == 1) hamming_distance++;
+            # }
+            # assert(hamming_distance >= 1);
+
+            expr = sum(
+                previous_diet[food_id] * (1 - prob.bv[food_id]) +  # Was ON, now OFF
+                (1 - previous_diet[food_id]) * prob.bv[food_id]    # Was OFF, now ON
+                for food_id in prob.bv
+            )
+
+            # Add this as a named constraint (important for debugging)
+            constraint_name = f"no_repeat_diet_{diet_num}"
+            if hasattr(prob, constraint_name):
+                delattr(prob, constraint_name)  # Remove if exists
+
+            setattr(prob, constraint_name, Constraint(expr=expr >= 1))
+
+        print(f"\nIteration {i}: Excluding {len(diet_history)} previous diets")
+
+    # NOW SOLVE with all the no-good cuts in place
+    nzf2 = UScplex2(False)
+
+    # AFTER SOLVING: Store this solution's VALUES (not variable references!)
+    # This is like memcpy() in C - we're copying the actual values
+    current_diet = {}
+    selected_foods = []
+
+    for food_id in prob.bv:
+        # Dereference and store the actual value (0 or 1)
+        food_is_selected = round(value(prob.bv[food_id]))
+        current_diet[food_id] = food_is_selected
+
+        if food_is_selected == 1:
+            selected_foods.append(food_id)
+
+    # Check for duplicates (this shouldn't happen if cuts are working)
+    is_duplicate = False
+    for prev_diet in diet_history:
+        if all(current_diet[f] == prev_diet[f] for f in prob.bv):
+            is_duplicate = True
+            print(f"⚠️ WARNING: Diet {i} is a duplicate! The no-good cuts may not be working.")
+            break
+
+    if not is_duplicate:
+        print(f"✓ Diet {i}: Found new combination with {len(selected_foods)} foods")
+        # Show first few foods for verification
+        print(f"  Sample foods: {selected_foods[:5]}...")
+
+    # Add to history (this is our "database" of previous diets)
+    diet_history.append(current_diet)
+
+
+
+    fl = nzf2[nzf2['amounts'] > 1e-3][['Long_Desc', 'amounts']]
+    flu = fl.merge(fl9, left_index=True, right_index=True, how='left')
+    flu['M'] = flu['amounts'] / flu['Gm_Wgt']
+    flu = fineprint(flu)  # add in the food drilldowns as %
+    flu = flu.loc[:, ~flu.columns.str.endswith(('Hi', 'Lo'))]
+
+    obj, st = slackscplex()
+    col = ['-slacks cost', '+slacks cost']
+    cols = ['nuta', '-slacks cost', '+slacks cost', 'min', 'max', '-slacks', '+slacks']
+
+    st = st[~st.index.str.endswith(('Hi', 'Lo'))]
+    st['NutrDesc'].fillna(st.index.to_series(), inplace=True)
+    st1 = st.set_index('NutrDesc')
+    st1 = st1[cols].transpose()
+    flu = pd.concat([flu, st1])
+
+    # Write flu to Excel files (if needed)
+    flu.sort_values('amounts', ascending=False).to_excel(fluwriter, sheet_name=str(i), freeze_panes=(2, 2))
+    st[cols].sort_values(col, ascending=False).to_excel(slackswriter, sheet_name=str(obj), freeze_panes=(1, 1))
+
+    # Prepare flu for Google Sheets update (with headers)
+    flu_with_headers = flu.fillna('').reset_index().transpose().reset_index().transpose()
+
+    # Create a new worksheet in the Google Sheet (using the iteration number as title)
+    worksheet = sheet.add_worksheet(str(i), flu.shape[0], flu.shape[1])
+
+    # Freeze the first row and first two columns
+    worksheet.freeze(rows=1, cols=2)
+
+    # Determine the cell range for the update (starting at A1)
+    num_rows, num_cols = flu_with_headers.shape
+    cell_range = gspread.utils.rowcol_to_a1(1, 1) + ":" + gspread.utils.rowcol_to_a1(num_rows, num_cols)
+
+    # Update the worksheet with the DataFrame values
+    worksheet.update(cell_range, flu_with_headers.values.tolist())
+
+    # (Optional) Add a note to cell A1 using the Sheets API service
+    service.spreadsheets().batchUpdate(
+        spreadsheetId=sheet.id,
+        body={
+            'requests': [{
+                'updateCells': {
+                    'range': {
+                        'sheetId': worksheet.id,
+                        'startRowIndex': 0,
+                        'endRowIndex': 1,
+                        'startColumnIndex': 0,
+                        'endColumnIndex': 1
+                    },
+                    'rows': [{
+                        'values': [{'note': str(value(uspyomo.prob.obj))}]
+                    }],
+                    'fields': 'note'
+                }
+            }]
+        }
+    ).execute()
+
+    # (Optional) Adjust Excel column width for the Excel file, if applicable
+    worksheet_ex = fluwriter.sheets[str(i)]
+    worksheet_ex.column_dimensions['B'].width = 50
+
+    # -------------------------
+    # Bi-Directional Highlighting and In-Loop Summary Update
+    # -------------------------
+    # Locate the "Long_Desc" column from the header row.
+    header = worksheet.row_values(1)
+    if "Long_Desc" not in header:
+        raise ValueError('Column "Long_Desc" not found in header row.')
+    col_index = header.index("Long_Desc") + 1  # Convert to 1-indexed
+
+    # Get current "Long_Desc" values (skipping header)
+    current_values = worksheet.col_values(col_index)[1:]
+
+    # Retrieve the objective function value (as a string) for this iteration.
+    # (Adjust the extraction as needed; here we assume value(uspyomo.prob.obj) provides the value.)
+    obj_value = str(value(uspyomo.prob.obj))
+
+    if i == 0:
+        # For the first iteration, there's no previous sheet.
+        summary_row = [str(i), obj_value, "\n"]
+    else:
+        # Get previous worksheet (by title, assumed to be str(i-1))
+        prev_ws = sheet.worksheet(str(i - 1))
+        previous_values = prev_ws.col_values(col_index)[1:]
+
+        prev_set = set(previous_values)
+        current_set = set(current_values)
+
+        # Determine newly added and removed items.
+        new_items = sorted(list(current_set - prev_set))
+        removed_items = sorted(list(prev_set - current_set))#RWS fix this ? 2025-4-5
+        print("New items:", new_items)
+        print("Removed items:", removed_items)
+        # # Use sets for order-independent comparison.
+        # prev_set = set(previous_values)
+        # current_set = set(current_values)
+
+        # # Determine newly added and removed items.
+        # new_items = sorted(list(current_set - prev_set))
+        # removed_items = sorted(list(prev_set - current_set))#RWS fix this ? 2025-4-5
+
+        # Highlight new items in current sheet (yellow)
+        for row_num, val in enumerate(current_values, start=2):
+            if val not in prev_set:
+                cell_a1 = gspread.utils.rowcol_to_a1(row_num, col_index)
+                fmt = cellFormat(backgroundColor=color(1, 1, 0))  # Yellow
+                gspread_formatting.format_cell_range(worksheet, cell_a1, fmt)
+
+        # Highlight removed items in previous sheet (cyan)
+        for row_num, val in enumerate(previous_values, start=2):
+            if val not in current_set:
+                cell_a1 = gspread.utils.rowcol_to_a1(row_num, col_index)
+                fmt = cellFormat(backgroundColor=color(0, 1, 1))  # Cyan
+                gspread_formatting.format_cell_range(prev_ws, cell_a1, fmt)
+
+        summary_row = [str(i), obj_value, "\n".join(new_items), "\n ".join(removed_items)]
+
+    # Append the summary row directly to the "Summary" sheet.
+    summary_ws.append_row(summary_row, value_input_option='USER_ENTERED')
+    from gspread_formatting import format_cell_range, cellFormat
+    wrap_fmt = cellFormat(wrapStrategy="WRAP")
+    format_cell_range(summary_ws, "C:D", wrap_fmt)
+    # Optional: Print log information
+    print(f"Iteration {i} complete. Summary: {summary_row}")
+
+# End of loop
+
+fluwriter.close()
+slackswriter.close()
+
+uspyomo.chosenfoods1.index.values
+
+def debugme():
+    # Use sets for order-independent comparison.
+  import pdb; pdb.set_trace()
+  prev_set = set(previous_values)
+  current_set = set(current_values)
+
+  # Determine newly added and removed items.
+  new_items = sorted(list(current_set - prev_set))
+  removed_items = sorted(list(prev_set - current_set))#RWS fix this ? 2025-4-5
+  print("New items:", new_items)
+  print("Removed items:", removed_items)
+  import pdb; pdb.set_trace()
+
+import pandas as pd
+import gspread
+import gspread_formatting
+from gspread_formatting import format_cell_range, cellFormat, color
+import gspread.utils
+
+# Assume these are already defined:
+#   - vd (your directory path)
+#   - gc (your authenticated gspread client)
+#   - service (your Google Sheets API service, used for batchUpdate if needed)
+#   - uspyomo, fineprint, fl9, etc.
+#
+# Create Excel writers (if still needed)
+fluwriter = pd.ExcelWriter(vd+"flu.xlsx", engine="openpyxl")
+slackswriter = pd.ExcelWriter(vd+"slacks.xlsx", engine="openpyxl")
+
+# Open the Google Sheets spreadsheet
+sheet = gc.open_by_key('1U1k0B78SS9nlualX9OmjMx8go09wDZpfyXhzHjpq1ks')
+
+# Clear existing sheets whose titles are digits in the desired range
+existing_sheets = sheet.worksheets()
+for ws in existing_sheets:
+    if ws.title.isdigit() and int(ws.title) in range(10):
+        sheet.del_worksheet(ws)
+
+# Loop over 5 iterations (adjust as needed)
+for i in range(5):
+    nzf2 = uspyomo.UScplex2(False)  # call local scip to solve
+    expr = sum(value(uspyomo.prob.bv[i]) * (1 - uspyomo.prob.bv[i]) + (1 - value(uspyomo.prob.bv[i])) * uspyomo.prob.bv[i]
+               for i in uspyomo.prob.bv)
+    uspyomo.prob.constraints.add(expr >= 1)
+
+    fl = nzf2[nzf2['amounts'] > 1e-3][['Long_Desc', 'amounts']]
+
+    flu = fl.merge(fl9, left_index=True, right_index=True, how='left')
+    flu['M'] = flu['amounts'] / flu['Gm_Wgt']
+    flu = fineprint(flu)  # add in the food drilldowns as %
+
+    flu = flu.loc[:, ~flu.columns.str.endswith(('Hi', 'Lo'))]
+    obj, st = uspyomo.slackscplex()
+    col = ['-slacks cost', '+slacks cost']
+    cols = ['nuta', '-slacks cost', '+slacks cost', 'min', 'max', '-slacks', '+slacks']
+
+    st = st[~st.index.str.endswith(('Hi', 'Lo'))]
+    st['NutrDesc'].fillna(st.index.to_series(), inplace=True)
+    st1 = st.set_index('NutrDesc')
+    st1 = st1[cols].transpose()
+    flu = pd.concat([flu, st1])
+
+    # Write flu to Excel (using your preferred sorting)
+    flu.sort_values('amounts', ascending=False).to_excel(fluwriter, sheet_name=str(i), freeze_panes=(2, 2))
+    st[cols].sort_values(col, ascending=False).to_excel(slackswriter, sheet_name=str(obj), freeze_panes=(1, 1))
+
+    # Prepare flu for Google Sheets update (with headers)
+    flu_with_headers = flu.fillna('').reset_index().transpose().reset_index().transpose()
+
+    # Create a new worksheet in the Google Sheet with name = str(i)
+    worksheet = sheet.add_worksheet(str(i), flu.shape[0], flu.shape[1])
+
+    # Freeze first row and first two columns
+    worksheet.freeze(rows=1, cols=2)
+
+    # Update cells with the DataFrame values (starting at A1)
+    worksheet.update('A1', flu_with_headers.values.tolist())
+
+    # (Optional) Add a note to cell A1 – your existing code using service.spreadsheets().batchUpdate
+    service.spreadsheets().batchUpdate(
+        spreadsheetId=sheet.id,
+        body={
+            'requests': [{
+                'updateCells': {
+                    'range': {
+                        'sheetId': worksheet.id,
+                        'startRowIndex': 0,
+                        'endRowIndex': 1,
+                        'startColumnIndex': 0,
+                        'endColumnIndex': 1
+                    },
+                    'rows': [{
+                        'values': [{'note': str(value(uspyomo.prob.obj))}]
+                    }],
+                    'fields': 'note'
+                }
+            }]
+        }
+    ).execute()
+
+    # (Optional) Adjust column width in the Excel sheet you wrote earlier
+    worksheet_ex = fluwriter.sheets[str(i)]
+    worksheet_ex.column_dimensions['B'].width = 50
+
+    # --- Integrated Highlighting of "Long_Desc" ---
+    # If not the first sheet, compare with the previous worksheet to highlight changes
+    if i > 0:
+        # Get previous worksheet by its title (assumed to be the previous iteration's number)
+        prev_ws = sheet.worksheet(str(i - 1))
+
+        # Retrieve header from current sheet to locate "Long_Desc"
+        header = worksheet.row_values(1)
+        if "Long_Desc" in header:
+            col_index = header.index("Long_Desc") + 1  # 1-indexed
+
+            # Get the current "Long_Desc" column (excluding header)
+            current_long_desc = worksheet.col_values(col_index)[1:]
+            # Get the previous "Long_Desc" column (excluding header)
+            previous_long_desc = prev_ws.col_values(col_index)[1:]
+
+            # Use a set for the previous values (order doesn't matter)
+            prev_set = set(previous_long_desc)
+
+            # For each cell in the current sheet's "Long_Desc" column, if its value is not in prev_set, highlight it.
+            for row_num, val in enumerate(current_long_desc, start=2):
+                if val not in prev_set:
+                    cell_a1 = gspread.utils.rowcol_to_a1(row_num, col_index)
+                    fmt = cellFormat(backgroundColor=color(1, 1, 0))  # Yellow background
+                    gspread_formatting.format_cell_range(worksheet, cell_a1, fmt)
+
+    # End of iteration loop
+
+fluwriter.close()
+slackswriter.close()
+
+import pandas as pd
+import gspread
+import gspread_formatting
+from gspread_formatting import format_cell_range, cellFormat, color
+import gspread.utils
+
+# --- Your existing setup ---
+# Assume these are already defined:
+#   - vd (your directory path)
+#   - gc (your authenticated gspread client)
+#   - service (your Google Sheets API service for batchUpdate if needed)
+#   - uspyomo, fineprint, fl9, etc.
+
+fluwriter = pd.ExcelWriter(vd + "flu.xlsx", engine="openpyxl")
+slackswriter = pd.ExcelWriter(vd + "slacks.xlsx", engine="openpyxl")
+
+# Open the Google Sheets spreadsheet
+sheet = gc.open_by_key('1U1k0B78SS9nlualX9OmjMx8go09wDZpfyXhzHjpq1ks')
+
+# Delete any worksheets whose title is a digit and within a certain range
+existing_sheets = sheet.worksheets()
+for ws in existing_sheets:
+    if ws.title.isdigit() and int(ws.title) in range(10):
+        sheet.del_worksheet(ws)
+
+# Loop over 5 iterations (or however many you require)
+for i in range(5):
+    nzf2 = uspyomo.UScplex2(False)  # call local scip to solve
+    expr = sum(value(uspyomo.prob.bv[j]) * (1 - uspyomo.prob.bv[j]) + (1 - value(uspyomo.prob.bv[j])) * uspyomo.prob.bv[j]
+               for j in uspyomo.prob.bv)
+    uspyomo.prob.constraints.add(expr >= 1)
+
+    fl = nzf2[nzf2['amounts'] > 1e-3][['Long_Desc', 'amounts']]
+    flu = fl.merge(fl9, left_index=True, right_index=True, how='left')
+    flu['M'] = flu['amounts'] / flu['Gm_Wgt']
+    flu = fineprint(flu)  # add in the food drilldowns as %
+    flu = flu.loc[:, ~flu.columns.str.endswith(('Hi', 'Lo'))]
+
+    obj, st = uspyomo.slackscplex()
+    col = ['-slacks cost', '+slacks cost']
+    cols = ['nuta', '-slacks cost', '+slacks cost', 'min', 'max', '-slacks', '+slacks']
+
+    st = st[~st.index.str.endswith(('Hi', 'Lo'))]
+    st['NutrDesc'].fillna(st.index.to_series(), inplace=True)
+    st1 = st.set_index('NutrDesc')
+    st1 = st1[cols].transpose()
+    flu = pd.concat([flu, st1])
+
+    # Write flu to Excel files (sorting as desired)
+    flu.sort_values('amounts', ascending=False).to_excel(fluwriter, sheet_name=str(i), freeze_panes=(2, 2))
+    st[cols].sort_values(col, ascending=False).to_excel(slackswriter, sheet_name=str(obj), freeze_panes=(1, 1))
+
+    # Prepare flu for Google Sheets update (with headers)
+    flu_with_headers = flu.fillna('').reset_index().transpose().reset_index().transpose()
+
+    # Create a new worksheet in the Google Sheet (using the iteration number as title)
+    worksheet = sheet.add_worksheet(str(i), flu.shape[0], flu.shape[1])
+
+    # Freeze the first row and first two columns
+    worksheet.freeze(rows=1, cols=2)
+
+    # Determine the cell range for the update (starting at A1)
+    num_rows, num_cols = flu_with_headers.shape
+    cell_range = gspread.utils.rowcol_to_a1(1, 1) + ":" + gspread.utils.rowcol_to_a1(num_rows, num_cols)
+
+    # Update the worksheet with the DataFrame values
+    worksheet.update(cell_range, flu_with_headers.values.tolist())
+
+    # (Optional) Add a note to cell A1 via the Sheets API service
+    service.spreadsheets().batchUpdate(
+        spreadsheetId=sheet.id,
+        body={
+            'requests': [{
+                'updateCells': {
+                    'range': {
+                        'sheetId': worksheet.id,
+                        'startRowIndex': 0,
+                        'endRowIndex': 1,
+                        'startColumnIndex': 0,
+                        'endColumnIndex': 1
+                    },
+                    'rows': [{
+                        'values': [{'note': str(value(uspyomo.prob.obj))}]
+                    }],
+                    'fields': 'note'
+                }
+            }]
+        }
+    ).execute()
+
+    # (Optional) Adjust Excel column width for sheet (if applicable)
+    worksheet_ex = fluwriter.sheets[str(i)]
+    worksheet_ex.column_dimensions['B'].width = 50
+
+    # --- Bi-Directional Highlighting of "Long_Desc" ---
+    # We assume the header row (row 1) contains "Long_Desc"
+    header = worksheet.row_values(1)
+    if "Long_Desc" not in header:
+        raise ValueError('Column "Long_Desc" not found in header row.')
+    col_index = header.index("Long_Desc") + 1  # Convert to 1-indexed column number
+
+    # For forward (newly added) items: compare current vs. previous
+    if i > 0:
+        prev_ws = sheet.worksheet(str(i - 1))
+        # Get "Long_Desc" values (skip header) from both sheets
+        current_values = worksheet.col_values(col_index)[1:]
+        previous_values = prev_ws.col_values(col_index)[1:]
+
+        # For order-independent comparison, use sets
+        prev_set = set(previous_values)
+        current_set = set(current_values)
+
+        # Newly added items (in current but not in previous): highlight in yellow
+        for row_num, val in enumerate(current_values, start=2):
+            if val not in prev_set:
+                cell_a1 = gspread.utils.rowcol_to_a1(row_num, col_index)
+                fmt = cellFormat(backgroundColor=color(1, 1, 0))  # Yellow
+                gspread_formatting.format_cell_range(worksheet, cell_a1, fmt)
+
+        # Removed items (in previous but not in current): highlight in cyan in the previous sheet
+        for row_num, val in enumerate(previous_values, start=2):
+            if val not in current_set:
+                cell_a1 = gspread.utils.rowcol_to_a1(row_num, col_index)
+                fmt = cellFormat(backgroundColor=color(0, 1, 1))  # Cyan
+                gspread_formatting.format_cell_range(prev_ws, cell_a1, fmt)
+
+# Close Excel writers
 fluwriter.close()
 slackswriter.close()
 
