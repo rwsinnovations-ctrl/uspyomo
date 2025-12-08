@@ -7,11 +7,7 @@ Original file is located at
     https://colab.research.google.com/drive/1T8nQeEgyBt_tIpHIkZ0DkAL1T44B3msz
 """
 
-!pip install --upgrade pandas
 import pandas as pd;pd.__version__
-
-pip install bike-wheel-calc
-
 from google.colab import auth
 auth.authenticate_user()
 
@@ -60,71 +56,6 @@ w3.update(values=[['Location: hills'],['Music: hill_mix.mp3'],['Notes: Hill repe
 print("✅ Done!")
 print(f"📋 URL: {spreadsheet.url}")
 print("\nUserData sheet created with user_id=1 (edit B1 to change)")
-
-https://pubmed.ncbi.nlm.nih.gov/31197570/
-#glutamine in foods. not free but some data in extract
-
-
-
-allfootnotes=pd.read_pickle('./nut_data_datasrc_footnotes')
-mps_file_path = "G:/My Drive/US/oxalate/mgca1to1/b6/glutamic/homeless/shelterfood/bipolar ratios/arginine/methionine/water/mealcycling/sols/cplex.mps"  # Updated file path
-mps_file_path = vd+"cplex.mps"#"G:\\My Drive\\US\\oxalate\\mgca1to1\\b6\\glutamic\\homeless\\shelterfood\\bipolar ratios\\arginine\\methionine\\water\\mealcycling\\sols\\cplex.mps"
-
-# Read the contents of the "cplex.mps" file
-
-with open(mps_file_path, "r", encoding="ISO-8859-1") as mps_file:
-  mps_content = mps_file.read()
-
-
-print(mps_content)
-
-import pandas as pd
-print(pd.__version__)
-import numpy as np
-print(np.__version__)
-
-allfootnotes.to_excel('allfootnotes.xlsx',freeze_panes=(1, 1))
-
-!pip install --upgrade xlrd
-#!pip install cvxpy
-
-help(pyscipopt.scip)
-
-pip install highspy
-
-import highspy
-import numpy as np
-
-h = highspy.Highs()
-
-import pyomo
-pyomo.__version__
-
-pip install pyomo
-
-"""# scipopt"""
-
-pip install  gspread-formatting
-
-!pip install -q condacolab
-#2024-01-26 works
-import condacolab
-condacolab.install()
-
-!conda install pyscipopt
-
-
-
-
-
-
-
-pip install pyomo
-
-!pyomo help --solvers
-
-# Commented out IPython magic to ensure Python compatibility.
-# %pdb on
 
 """# usor2"""
 
@@ -426,100 +357,6 @@ r=uspyomo.UScplex1int(mixed=True,binconsl=intvits,mfg=None,mn=26,mfgex=[])#mfgex
 #for scip, use this version that doesnt' do quantization of amounts
 r=uspyomo.UScplex1int(mixed=True,binconsl=None,mfg=None,mn=24,mfgex=mfgex)#mn=16#this should return the cvxpy.problem to cache i
 
-#the upload link
-https://neos-server.org/neos/solvers/milp:Gurobi/MPS.html
-
-pip install build123d
-
-
-
-
-
-"""## No-good cuts
-the sequence in each directory (order of creation dates) is mps, model0.sol, flu (spreadsheet)
-if the newest is mps, do nothing and stop
-is the newest is zip then unzip then make flu, then rebuild contraints then make new mps, then stop
-Three things can happen in a directory. 1)this is old directory, just building constraint from here 2) this is the solver edge, generate the mps file here
-3) this is solved edge, make flu
-4) past the end this is dinosaur , do nothing
-"""
-
-import os
-def makeflu(input_file, output_dir):
-    # Your processing code here
-    print(f"Processing {input_file} in directory {output_dir}")
-
-    cbcsol=pd.read_table(input_file,index_col=0,sep=None,names=['amounts'],dtype={'name':str,'amounts':float},skiprows=0,engine='python',on_bad_lines='skip')#,dtype={'NAME':str,'CVX_xpress_qp':float},
-    current_sol=cbcsol[cbcsol.index.str.startswith('bv')]#('binvars')]
-    ns=current_sol.shape[0]
-    expr = sum((1 - uspyomo.prob.bv[i]) for i in range(ns) if int(current_sol.iloc[i]['amounts']) == 1) + \
-       sum(uspyomo.prob.bv[i] for i in range(ns) if int(current_sol.iloc[i]['amounts']) == 0)
-
-import re
-from pathlib import Path
-import zipfile
-
-
-# Assume 'vd' is already defined as your full absolute path (e.g., from mounting drive)
-base_dir = Path(vd)
-
-# Regular expression to match subdirectories like "sols", "sols1", "sols2", etc.
-pattern = re.compile(r'^sols\d*$')
-
-# Iterate over matching subdirectories
-for sub_dir in sorted(base_dir.iterdir(), key=lambda p: p.name):
-    if sub_dir.is_dir() and pattern.fullmatch(sub_dir.name):
-        model_file = sub_dir / "model0.sol"
-
-        # Look for zip files in the directory
-        for zip_file in sub_dir.glob("*.zip"):
-            # Unzip if model0.sol doesn't exist, or if the zip file is newer
-            if not model_file.exists() or zip_file.stat().st_mtime > model_file.stat().st_mtime:
-                try:
-                    with zipfile.ZipFile(zip_file, 'r') as z:
-                        z.extractall(sub_dir)
-                    print(f"Extracted {zip_file} in {sub_dir}")
-                except zipfile.BadZipFile:
-                    print(f"Failed to extract {zip_file} (bad zip file).")
-
-        # After extraction, process the model0.sol file if it exists
-        if model_file.exists():
-            makeflu(model_file, sub_dir)
-        else:
-            print(f"model0.sol not found in {sub_dir} after extraction")
-
-vd="/content/drive/MyDrive/US/oxalate/mgca1to1/b6/glutamic/homeless/shelterfood/bipolar ratios/arginine/methionine/water/mealcycling/"
-import pandas as pd#2022-11-01 if reading gurobi cplex output:
-
-import glob
-solssubdir="sols1/"
-path = vd+solssubdir# absolute path to search all text files inside a specific folder
-zf = glob.glob(path+'*.zip')
-from zipfile import ZipFile
-with ZipFile(zf[0], 'r') as zObject:# loading the temp.zip and creating a zip object
-    zObject.extractall(path=path)# Extracting all the members of the zipinto a specific location.
-
-
-cbcsol=pd.read_table(vd+"sols1/"+"model0.sol",index_col=0,sep=None,names=['amounts'],dtype={'name':str,'amounts':float},skiprows=0,engine='python',on_bad_lines='skip')#,dtype={'NAME':str,'CVX_xpress_qp':float},
-current_sol=cbcsol[cbcsol.index.str.startswith('bv')]#('binvars')]
-ns=current_sol.shape[0]
-expr = sum((1 - uspyomo.prob.bv[i]) for i in range(ns) if int(current_sol.iloc[i]['amounts']) == 1) + \
-       sum(uspyomo.prob.bv[i] for i in range(ns) if int(current_sol.iloc[i]['amounts']) == 0)
-
-expr = sum(value(prob.bv[i]) * (1 - prob.bv[i]) + (1 - value(prob.bv[i])) * prob.bv[i] for i in prob.bv)
-uspyomo.prob.constraints.add(expr>=1)
-
-"""## end no-good cuts"""
-
-from google.colab import files
-mps_filename = "simple_model.mps"
-uspyomo.prob.write(filename=mps_filename, io_options={"symbolic_solver_labels": True})
-files.download(mps_filename)
-#now send to neos
-
-"""## fineprint"""
-
-!pip install -q pygsheets
 
 from google.colab import auth
 auth.authenticate_user()
@@ -1076,7 +913,7 @@ for i in range(150):
     if i > 0:
         for diet_num, previous_diet in enumerate(diet_history):
             # This is the key: we're using STORED VALUES from previous_diet
-            # combined with VARIABLE REFERENCES from uspyomo.prob.bv
+            # combined with VARIABLE REFERENCES from prob.bv
 
             # Create the no-good cut:
             # "At least one food must be different from this previous diet"
@@ -1090,31 +927,31 @@ for i in range(150):
             # assert(hamming_distance >= 1);
 
             expr = sum(
-                previous_diet[food_id] * (1 - uspyomo.prob.bv[food_id]) +  # Was ON, now OFF
-                (1 - previous_diet[food_id]) * uspyomo.prob.bv[food_id]    # Was OFF, now ON
-                for food_id in uspyomo.prob.bv
+                previous_diet[food_id] * (1 - prob.bv[food_id]) +  # Was ON, now OFF
+                (1 - previous_diet[food_id]) * prob.bv[food_id]    # Was OFF, now ON
+                for food_id in prob.bv
             )
 
             # Add this as a named constraint (important for debugging)
             constraint_name = f"no_repeat_diet_{diet_num}"
-            if hasattr(uspyomo.prob, constraint_name):
-                delattr(uspyomo.prob, constraint_name)  # Remove if exists
+            if hasattr(prob, constraint_name):
+                delattr(prob, constraint_name)  # Remove if exists
 
-            setattr(uspyomo.prob, constraint_name, Constraint(expr=expr >= 1))
+            setattr(prob, constraint_name, Constraint(expr=expr >= 1))
 
         print(f"\nIteration {i}: Excluding {len(diet_history)} previous diets")
 
     # NOW SOLVE with all the no-good cuts in place
-    nzf2 = uspyomo.UScplex2(False)
+    nzf2 = UScplex2(False)
 
     # AFTER SOLVING: Store this solution's VALUES (not variable references!)
     # This is like memcpy() in C - we're copying the actual values
     current_diet = {}
     selected_foods = []
 
-    for food_id in uspyomo.prob.bv:
+    for food_id in prob.bv:
         # Dereference and store the actual value (0 or 1)
-        food_is_selected = round(value(uspyomo.prob.bv[food_id]))
+        food_is_selected = round(value(prob.bv[food_id]))
         current_diet[food_id] = food_is_selected
 
         if food_is_selected == 1:
@@ -1123,7 +960,7 @@ for i in range(150):
     # Check for duplicates (this shouldn't happen if cuts are working)
     is_duplicate = False
     for prev_diet in diet_history:
-        if all(current_diet[f] == prev_diet[f] for f in uspyomo.prob.bv):
+        if all(current_diet[f] == prev_diet[f] for f in prob.bv):
             is_duplicate = True
             print(f"⚠️ WARNING: Diet {i} is a duplicate! The no-good cuts may not be working.")
             break
@@ -1144,7 +981,7 @@ for i in range(150):
     flu = fineprint(flu)  # add in the food drilldowns as %
     flu = flu.loc[:, ~flu.columns.str.endswith(('Hi', 'Lo'))]
 
-    obj, st = uspyomo.slackscplex()
+    obj, st = slackscplex()
     col = ['-slacks cost', '+slacks cost']
     cols = ['nuta', '-slacks cost', '+slacks cost', 'min', 'max', '-slacks', '+slacks']
 
